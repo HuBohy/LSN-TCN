@@ -19,7 +19,7 @@ Please contact [Kevin El Haddad](kevin.elhaddad@umons.ac.be) for details about t
 ### Installation
 1. Clone repo
     ```bash
-    git clone 
+    git clone https://github.com/HuBohy/LSN-TCN.git
     cd LSN-TCN
     ```
 
