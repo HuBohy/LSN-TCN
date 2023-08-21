@@ -95,7 +95,7 @@ def evaluate(model, test_loader, args):
     print('Validation balanced accuracy: {:.4f}'.format(bal_acc))
     print('Validation accuracy: {:.4f}'.format(acc))
     print('Validation loss: {:.4f}'.format(loss))
-
+ 
     return loss
 
 
