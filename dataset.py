@@ -45,8 +45,8 @@ class NDCME(Dataset):
         self.dirpath = {'video': video_dirpath, 'audio': audio_dirpath}
         self.mode = mode
 
-        self.vids = glob(os.path.join(self.dirpath['video'], 'data', '*'))
-        self.wavs = glob(os.path.join(self.dirpath['audio'], 'data', '*'))
+        self.vids = glob(os.path.join(self.dirpath['video'], '*'))
+        self.wavs = glob(os.path.join(self.dirpath['audio'], '*'))
         self.expr2int = {'Laughs':0, 'Smiles':1, 'None':2}
 
         np.random.seed(0)
@@ -106,8 +106,8 @@ class NDCME(Dataset):
             if vid in wavs_filename:
                 files_to_keep.append(vid)
         
-        self.vids = [os.path.join(self.dirpath['video'], 'data', filename) for filename in files_to_keep]
-        self.wavs = [os.path.join(self.dirpath['audio'], 'data', filename) for filename in files_to_keep]
+        self.vids = [os.path.join(self.dirpath['video'], filename) for filename in files_to_keep]
+        self.wavs = [os.path.join(self.dirpath['audio'], filename) for filename in files_to_keep]
         assert len(self.vids) == len(self.wavs)
 
     def __len__(self):
@@ -149,34 +149,9 @@ class NDCME(Dataset):
         if self.mode == 'train':
             fbank = self.noise(fbank)
 
-        ## In case we need spectrograms
-        # fbank = torchaudio.compliance.kaldi.fbank(
-        #         waveform, 
-        #         htk_compat=True, 
-        #         sample_frequency=16000, 
-        #         use_energy=False, 
-        #         window_type='hanning', 
-        #         num_mel_bins=128, 
-        #         dither=0.0, 
-        #         frame_shift=10
-        # )
-        # target_length = 1024
-        # n_frames = fbank.shape[0]
-        # p = target_length - n_frames
-        # cut and pad
-        # if p > 0:
-        #     m = torch.nn.ZeroPad2d((0, 0, 0, p))
-        #     fbank = m(fbank)
-        # elif p < 0:
-        #     fbank = fbank[0:target_length, :]
-        
-        # fbank = (fbank - self.norm_mean) / (self.norm_std)
-
         label, intensity = self.get_label_from_filename(vid)
         label = self.expr2int[label]
         return frames, fbank, label
     
     def get_label_from_filename(self, filename):
         return filename.split('_')[4:6]
-
-# dataset = NDCME('./datasets/ndc-me/roi', './datasets/ndc-me/audio', 'val')

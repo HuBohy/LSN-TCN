@@ -1,9 +1,3 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
-
-# Copyright 2020 Imperial College London (Pingchuan Ma)
-# Apache 2.0  (http://www.apache.org/licenses/LICENSE-2.0)
-
 """ TCN for Laughs and Smiles detection """
 
 import time
@@ -14,7 +8,6 @@ import argparse
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torch.utils.data import DataLoader, WeightedRandomSampler
 
 import numpy as np
@@ -24,9 +17,9 @@ from utils import get_save_folder
 
 from sklearn.metrics import confusion_matrix, balanced_accuracy_score, accuracy_score
 
-from metrics import AverageMeter
-from lipreading.optim_utils import CosineScheduler
-from lipreading.model import get_model_from_json
+from utilities.metrics import AverageMeter
+from models.optim_utils import CosineScheduler
+from models.LSNTCN import LSNTCN
 
 def load_args():
     parser = argparse.ArgumentParser(description='Pytorch Lipreading ')
@@ -40,16 +33,7 @@ def load_args():
     parser.add_argument("--data-audio", type=str, default='./datasets/ndc-me/audio', help="audio data path")
     parser.add_argument('--label-path', type=str, default='./datasets/ndc-me/labels/laughs_smiles.txt', help='Path to txt file with labels')
     parser.add_argument('--num-classes', type=int, default=3, help='Number of classes')
-    parser.add_argument('-m', '--mode', default='video', choices=['video', 'audio', 'fusion'], help='choose the modality')
-
-    parser.add_argument('--backbone-type', type=str, default='resnet', choices=['resnet'], help='Architecture used for backbone')
-    parser.add_argument('--relu-type', type=str, default='relu', choices=['relu'], help='what relu to use' )
-
-    parser.add_argument('--tcn-kernel-size', type=int, nargs="+", help='Kernel to be used for the TCN module')
-    parser.add_argument('--tcn-num-layers', type=int, default=4, help='Number of layers on the TCN module')
-    parser.add_argument('--tcn-dropout', type=float, default=0.2, help='Dropout value for the TCN module')
-    parser.add_argument('--tcn-dwpw', default=False, action='store_true', help='If True, use the depthwise seperable convolution in TCN architecture')
-    parser.add_argument('--tcn-width-mult', type=int, default=1, help='TCN width multiplier')
+    parser.add_argument('-m', '--mode', default='fusion', choices=['video', 'audio', 'fusion'], help='choose the modality')
 
     parser.add_argument('--optim',type=str, default='adam', choices = ['adam','sgd'])
     parser.add_argument('--lr', default=3e-6, type=float, help='initial learning rate')
@@ -97,7 +81,6 @@ def evaluate(model, test_loader, args):
     print('Validation loss: {:.4f}'.format(loss))
  
     return loss
-
 
 def train(model, train_loader, test_loader, args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -188,7 +171,10 @@ def main():
     args.logging_dir = get_save_folder(args)
     print("Model and log being saved in: {}".format(args.logging_dir))
 
-    model = get_model_from_json(args=args)
+    model = LSNTCN(num_classes=args.num_classes,
+                    relu_type='prelu',
+                    mode=args.mode).cuda()
+
     train_dataset = NDCME(video_dirpath, audio_dirpath, mode='train')
     val_dataset = NDCME(video_dirpath, audio_dirpath, mode='val')
     test_dataset = NDCME(video_dirpath, audio_dirpath, mode='test')

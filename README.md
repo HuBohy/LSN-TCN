@@ -6,9 +6,6 @@
 > University of Mons
 
 ### NDC-ME Dataset
-<p align="center">
-    <img src="assets/ndc-me.png">
-</p>
 Please contact [Kevin El Haddad](kevin.elhaddad@umons.ac.be) for details about the dataset.
 
 ## :wrench: Dependencies and Installation
@@ -30,7 +27,7 @@ Please contact [Kevin El Haddad](kevin.elhaddad@umons.ac.be) for details about t
     ```
 
 ## :computer: Training
-Our LSN-TCN checkpoints can be found under the following link: [Drive]()
+Our LSN-TCN checkpoints can be found under the following link: [Drive](https://drive.google.com/drive/folders/1dFUjKKMw8VgKY_n2iOqbQqY4Yuz3RVdx?usp=drive_link)
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python main.py --data-video path/to/video/data --data-audio path/to/audio/data --label-path path/to/labels --mode fusion 
@@ -39,7 +36,7 @@ The result will be stored in ```logs/fusion/```.
 
 ## :scroll: Acknowledgement
 
- Our LSN-TCN implementation is inspired by [MS-TCN](). We appreciate the authors of [MS-TCN]() for making their codes available to public.
+ Our LSN-TCN implementation is inspired by [MS-TCN](https://arxiv.org/abs/1903.01945). We appreciate the authors of [MS-TCN](https://arxiv.org/abs/1903.01945) for making their codes available to public.
 
 ## :scroll: BibTeX
 

@@ -4,64 +4,23 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-from lipreading.models.resnet1D import ResNet1D, BasicBlock1D
-from lipreading.models.resnet import ResNet, BasicBlock
-from lipreading.models.tcn import MultibranchTemporalConvNet, TemporalConvNet
-
-from utils import load_json
+from models.backbones.resnet1D import ResNet1D, BasicBlock1D
+from models.backbones.resnet import ResNet, BasicBlock
+from models.backbones.tcn import MultibranchTemporalConvNet
 
 def threeD_to_2D_tensor(x):
     n_batch, n_channels, sx, sy, s_time = x.shape
     x = x.transpose(1, 2)
     return x.reshape(n_batch*s_time, n_channels, sx, sy)
 
-def get_model_from_json(args):
-    assert args.config_path.endswith('.json') and os.path.isfile(args.config_path), \
-        "'.json' config path does not exist. Path input: {}".format(args.config_path)
-    args_loaded = load_json( args.config_path)
-    args.backbone_type = args_loaded['backbone_type']
-    args.width_mult = args_loaded['width_mult']
-    args.relu_type = args_loaded['relu_type']
-    tcn_options = { 'num_layers': args_loaded['tcn_num_layers'],
-                    'kernel_size': args_loaded['tcn_kernel_size'],
-                    'dropout': args_loaded['tcn_dropout'],
-                    'dwpw': args_loaded['tcn_dwpw'],
-                    'width_mult': args_loaded['tcn_width_mult'],
-                  }
-
-    model = LSNTCN(num_classes=args.num_classes,
-                    tcn_options=tcn_options,
-                    relu_type=args.relu_type,
-                    mode=args.mode).cuda()
-    
-    return model
-
-class TCN(nn.Module):
-    """Implements Temporal Convolutional Network (TCN)
-    __https://arxiv.org/pdf/1803.01271.pdf
-    """
-
-    def __init__(self, input_size, num_channels, num_classes, tcn_options, dropout, relu_type, dwpw=False):
-        super(TCN, self).__init__()
-        self.tcn_trunk = TemporalConvNet(input_size, num_channels, dropout=dropout, tcn_options=tcn_options, relu_type=relu_type, dwpw=dwpw)
-
-        self.consensus_func = torch.mean
-        self.has_aux_losses = False
-
-    def forward(self, x, B):
-        # x needs to have dimension (N, C, L) in order to be passed into CNN
-        x = self.tcn_trunk(x.transpose(1, 2))
-        x = self.consensus_func(x, dim=-1)
-        return x
-
 class MultiscaleMultibranchTCN(nn.Module):
-    def __init__(self, input_size, num_channels, num_classes, tcn_options, dropout, relu_type, dwpw=False):
+    def __init__(self, input_size, num_channels, num_classes, dropout, relu_type, dwpw=False):
         super(MultiscaleMultibranchTCN, self).__init__()
 
-        self.kernel_sizes = tcn_options['kernel_size']
-        self.num_kernels = len( self.kernel_sizes )
+        self.kernel_sizes = [3, 5, 7]
+        self.num_kernels = len(self.kernel_sizes)
 
-        self.mb_ms_tcn = MultibranchTemporalConvNet(input_size, num_channels, tcn_options, dropout=dropout, relu_type=relu_type, dwpw=dwpw)
+        self.mb_ms_tcn = MultibranchTemporalConvNet(input_size, num_channels, dropout=dropout, relu_type=relu_type, dwpw=dwpw)
         self.tcn_output = nn.Linear(num_channels[-1], num_classes)
         self.consensus_func = torch.mean
 
@@ -74,7 +33,7 @@ class MultiscaleMultibranchTCN(nn.Module):
 
 class LSNTCN(nn.Module):
     def __init__( self, hidden_dim=256, num_classes=500,
-                  relu_type='prelu', tcn_options={}, mode='video'):
+                  relu_type='prelu', mode='video'):
         super(LSNTCN, self).__init__()
         self.mode = mode
 
@@ -91,15 +50,13 @@ class LSNTCN(nn.Module):
                     nn.MaxPool3d( kernel_size=(3, 3, 1), stride=(2, 2, 1), padding=(1, 1, 0)))
 
         self.backend_out = 512
-        tcn_class = TCN if len(tcn_options['kernel_size']) == 1 else MultiscaleMultibranchTCN
-        num_channels = [hidden_dim*len(tcn_options['kernel_size'])*tcn_options['width_mult']]*tcn_options['num_layers']
-        self.tcn = tcn_class( input_size=self.backend_out,
+        num_channels = [hidden_dim*len([3, 5, 7])*1]*4
+        self.tcn = MultiscaleMultibranchTCN( input_size=self.backend_out,
                               num_channels=num_channels,
                               num_classes=num_classes,
-                              tcn_options=tcn_options,
-                              dropout=tcn_options['dropout'],
+                              dropout=0.2,
                               relu_type=relu_type,
-                              dwpw=tcn_options['dwpw'],
+                              dwpw=False,
                             )
         if self.mode == 'fusion':
             self.tcn_output = nn.Linear(num_channels[-1]*2, num_classes)

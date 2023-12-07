@@ -116,10 +116,10 @@ class MultibranchTemporalBlock(nn.Module):
         return self.relu_final(out1 + res)
 
 class MultibranchTemporalConvNet(nn.Module):
-    def __init__(self, num_inputs, num_channels, tcn_options, dropout=0.2, relu_type='relu', dwpw=False):
+    def __init__(self, num_inputs, num_channels, dropout=0.2, relu_type='relu', dwpw=False):
         super(MultibranchTemporalConvNet, self).__init__()
 
-        self.ksizes = tcn_options['kernel_size']
+        self.ksizes = [3, 5, 7]
 
         layers = []
         num_levels = len(num_channels)
