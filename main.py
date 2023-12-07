@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader, WeightedRandomSampler
 import numpy as np
 
 from dataset import NDCME
-from utils import get_save_folder
+from utilities.utils import get_save_folder
 
 from sklearn.metrics import confusion_matrix, balanced_accuracy_score, accuracy_score
 
