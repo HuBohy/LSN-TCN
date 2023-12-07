@@ -39,7 +39,7 @@ The result will be stored in ```logs/fusion/```.
  Our LSN-TCN implementation is inspired by [MS-TCN](https://arxiv.org/abs/1903.01945). We appreciate the authors of [MS-TCN](https://arxiv.org/abs/1903.01945) for making their codes available to public.
 
 ## :scroll: BibTeX
-
+If you use this work in your project, please cite:
 ```
 @inproceedings{bohy2022new,
   title={A new perspective on smiling and laughter detection: Intensity levels matter},
